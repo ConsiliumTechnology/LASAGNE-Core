@@ -109,17 +109,9 @@ class LASAGNECoreConan(ConanFile):
         assert self.settings.os == "Macos"
     
     def package(self):
-        print(str(self.source_folder))
-        print(str(self.build_folder))
-        print(str(self.package_folder))
- 
         self.copy("*.*", dst="", src="", keep_path="True", excludes=("*.iobj", "*.ipdb", "*.tlog", "*.obj", "*.lastbuildstate"))
 
     def package_info(self):
-        print(str(self.source_folder))
-        print(str(self.build_folder))
-        print(str(self.package_folder))
-
         working_dir = self.package_folder
         #self.cpp_info.libs = tools.collect_libs(self)
         self.env_info.DAF_ROOT = working_dir
