@@ -21,7 +21,7 @@ def append_to_env_variable(var, value, separator, prepend=False):
             del os.environ[var]
 
 class LASAGNECoreConan(ConanFile):
-    name = "LASAGNE-Core-Git"
+    name = "LASAGNE-Core"
     version = "1.5.1" #make this automatic
     license = ""
     url = "https://github.com/LASAGNE-Open-Systems/LASAGNE-Core"
@@ -39,8 +39,8 @@ class LASAGNECoreConan(ConanFile):
             self.build_requires('strawberryperl/5.26.0@conan/stable')
 
     def configure(self):
-        self.requires('ACE_TAO_MPC/6.4.8@artifactory/package')
-        self.requires('OpenDDS/3.12.2@artifactory/package')
+        self.requires('ACE_TAO_MPC/6.4.8@lasagne/stable')
+        self.requires('OpenDDS/3.12.2@lasagne/stable')
         
         if self.settings.os not in ["Windows", "Linux", "Macos"]:
             raise ConanException("Recipe for settings.os='{}' not implemented.".format(self.settings.os))
