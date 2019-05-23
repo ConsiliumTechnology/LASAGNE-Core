@@ -49,7 +49,7 @@ namespace DAF
         };
 
         /** \todo{Fill this in} */
-        WFMOSignalReactor(void);
+        WFMOSignalReactor(bool use_sim_time_policy);
         /** \todo{Fill this in} */
         virtual ~WFMOSignalReactor(void);
 
