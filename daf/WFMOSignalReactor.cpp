@@ -35,26 +35,6 @@
 
 namespace  //anonymous
 {
-
-    class Sim_Time_Policy;
-    using Sim_Time_Value = ACE_Time_Value_T<Sim_Time_Policy>;
-    class Sim_Time_Policy
-    {
-    public:
-        /// Return the current time according to this policy
-        Sim_Time_Value operator()() const; // todo
-
-        /// Noop. Just here to satisfy backwards compatibility demands.
-        void set_gettimeofday(ACE_Time_Value(*)()) {}
-    };
-
-    // template to redefine the order of the template params so that we can still use defaults but swap the time policy below
-    template <typename TIME_POLICY = ACE_System_Time_Policy,
-        typename TYPE = std::remove_reference_t<decltype(std::declval<std::remove_pointer_t<decltype(std::declval<ACE_Timer_Heap::HEAP_ITERATOR>().item())>>().get_type())>,
-        typename FUNCTOR = std::remove_reference_t<decltype(std::declval<ACE_Timer_Heap::Base_Time_Policy>().upcall_functor())>,
-        typename ACE_LOCK = std::remove_reference_t<decltype(std::declval<ACE_Timer_Heap>().mutex())>>
-    using Timer_Queue = ACE_Timer_Heap_T<TYPE, FUNCTOR, ACE_LOCK, TIME_POLICY>;
-
 #if defined (ACE_WIN32)
     struct WFMO_Reactor : ACE_WFMO_Reactor {
         using ACE_WFMO_Reactor::ACE_WFMO_Reactor;
@@ -73,6 +53,41 @@ namespace  //anonymous
 
 namespace DAF
 {
+    Sim_Time_Value Sim_Time_Policy::operator()() const
+    {
+        return SingletonSimTime::instance()->get_time_value();
+    }
+
+    void SimTime::set_time(double time)
+    {
+        time_ = time;
+    }
+
+    double SimTime::get_time() const
+    {
+        return time_;
+    }
+
+    Sim_Time_Value SimTime::get_time_value() const
+    {
+        Sim_Time_Value time;
+        time.set(get_time());
+        return time;
+    }
+
+    void SimTime::tick()
+    {
+        set_time(get_next_tick());
+    }
+
+    double SimTime::get_next_tick() const
+    {
+        if (ACE_Reactor::instance()->timer_queue()->is_empty())
+            return get_time();
+        const auto tv = ACE_Reactor::instance()->timer_queue()->earliest_time();
+        return tv.sec() + double(tv.usec()) / ACE_ONE_SECOND_IN_USECS;
+    }
+
     WFMOSignalReactor::WFMOSignalReactor(bool use_sim_time_policy)
         : ACE_Reactor(new WFMO_Reactor(nullptr, use_sim_time_policy
                                                 ? static_cast<ACE_Timer_Queue*>(new Timer_Queue<Sim_Time_Policy>())
@@ -109,11 +124,9 @@ namespace DAF
 
     int WFMOSignalReactor::svc()
     {
-        while (this->isAvailable())
-        {
-            return this->run_reactor_event_loop();
-        }
-        return -1;
+        if (!this->isAvailable())
+            return -1;
+        return this->run_reactor_event_loop();
     }
 
     int WFMOSignalReactor::close(u_long flags)

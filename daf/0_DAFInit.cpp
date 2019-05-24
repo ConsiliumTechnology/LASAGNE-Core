@@ -20,6 +20,8 @@
 ***************************************************************/
 #define DAF_0_DAFINIT_CPP
 
+#include "WFMOSignalReactor.h"
+
 #include <ace/OS.h>
 #include <ace/Init_ACE.h>
 #include <ace/TP_Reactor.h>
@@ -51,17 +53,17 @@ namespace { //anonymous
 
     struct ACELoader : ACE_OS_Object_Manager
     {
-        ACELoader(void)    { ACE::init(); }
-        ~ACELoader(void)   { ACE::fini(); }
+        ACELoader()    { ACE::init(); }
+        ~ACELoader()   { ACE::fini(); }
     };
 
     /* Initialize the ACE Layer and replace the global Reactor with the ACE_TP_Reactor varient */
 
     const struct DAFInit : ACELoader
     {
-        DAFInit(void) // Set up process wide state.
+        DAFInit() // Set up process wide state.
         {
-            ACE_TEST_ASSERT(ACE_Reactor::instance(new ACE_Reactor(new ACE_TP_Reactor(), true), true) == 0);
+            ACE_TEST_ASSERT(ACE_Reactor::instance(new ACE_Reactor(new ACE_TP_Reactor(nullptr, static_cast<ACE_Timer_Queue*>(new DAF::Timer_Queue<DAF::Sim_Time_Policy>())), true), true) == nullptr);
 
 #if !defined(ACE_WIN32)
 

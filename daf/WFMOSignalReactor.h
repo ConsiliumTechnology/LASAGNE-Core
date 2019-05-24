@@ -28,9 +28,69 @@
 
 #include <ace/Reactor.h>
 #include <ace/Singleton.h>
+#include <ace/Timer_Heap.h>
+#include <atomic>
 
 namespace DAF
 {
+
+    class Sim_Time_Policy; // fwd decl for template
+    using Sim_Time_Value = ACE_Time_Value_T<Sim_Time_Policy>;
+    class DAF_Export Sim_Time_Policy
+    {
+    public:
+        /// Return the current time according to this policy
+        Sim_Time_Value operator()() const;
+
+        /// Noop. Just here to satisfy backwards compatibility demands.
+        void set_gettimeofday(ACE_Time_Value(*)()) {}
+    };
+
+    // template to redefine the order of the template params so that we can still use defaults but swap the time policy below
+    template <typename TIME_POLICY = ACE_System_Time_Policy,
+        typename TYPE = std::remove_reference_t<decltype(std::declval<std::remove_pointer_t<decltype(std::declval<ACE_Timer_Heap::HEAP_ITERATOR>().item())>>().get_type())>,
+        typename FUNCTOR = std::remove_reference_t<decltype(std::declval<ACE_Timer_Heap::Base_Time_Policy>().upcall_functor())>,
+        typename ACE_LOCK = std::remove_reference_t<decltype(std::declval<ACE_Timer_Heap>().mutex())>>
+        using Timer_Queue = ACE_Timer_Heap_T<TYPE, FUNCTOR, ACE_LOCK, TIME_POLICY>;
+
+    // Use via the ACE Singleton, SingletonSimTime::instance()->set_time(...);
+    class DAF_Export SimTime
+    {
+        std::atomic<double> time_ = 0.0;
+    public:
+        // explicitly set the time
+        // surely any skipped timers will trigger when this happens
+        void set_time(double time);
+        // return the current time
+        double get_time() const;
+        Sim_Time_Value get_time_value() const;
+        // step to the next timer tick, or not if none
+        void tick();
+        // get the next timer tick, or current time if none
+        double get_next_tick() const;
+    };
+
+    struct DAF_Export SimTimeSingleton : SimTime
+    {
+        const ACE_TCHAR *dll_name() const
+        {
+            return DAF_DLL_NAME;
+        }
+        const ACE_TCHAR* name() const
+        {
+            return typeid(*this).name();
+        }
+    };
+
+} // namespace DAF
+
+// sim time singleton
+typedef ACE_DLL_Singleton_T<DAF::SimTimeSingleton, ACE_SYNCH_MUTEX> SingletonSimTime;
+DAF_SINGLETON_DECLARE(ACE_DLL_Singleton_T, DAF::SimTimeSingleton, ACE_SYNCH_MUTEX)
+
+namespace DAF
+{
+
     /** @class WFMOSignalReactor
     * @brief Brief \todo{Fill this in}
     *
@@ -51,7 +111,7 @@ namespace DAF
         /** \todo{Fill this in} */
         WFMOSignalReactor(bool use_sim_time_policy);
         /** \todo{Fill this in} */
-        virtual ~WFMOSignalReactor(void);
+        virtual ~WFMOSignalReactor();
 
         /** \todo{Fill this in} */
         virtual int run(size_t thr_count, bool wait_completion = false);
@@ -62,12 +122,12 @@ namespace DAF
         virtual int close(u_long flags);
 
         /** \todo{Fill this in} */
-        virtual int svc(void);
+        virtual int svc();
 
     protected:
 
         /// Terminates object when dynamic unlinking occurs.
-        virtual int fini(void);
+        virtual int fini();
     };
 
     /** @struct WFMOSignalReactorSingleton
@@ -78,27 +138,26 @@ namespace DAF
     struct DAF_Export WFMOSignalReactorSingleton : WFMOSignalReactor
     {
         /** \todo{Fill this in} */
-        WFMOSignalReactorSingleton(void);
+        WFMOSignalReactorSingleton();
 
         /** \todo{Fill this in} */
-        const ACE_TCHAR *dll_name(void) const
+        const ACE_TCHAR *dll_name() const
         {
             return DAF_DLL_NAME;
         }
 
         /** \todo{Fill this in} */
-        const ACE_TCHAR *name(void) const
+        const ACE_TCHAR *name() const
         {
             return typeid(*this).name();
         }
     };
-
 } // namespace DAF
 
 typedef DAF::WFMOSignalReactorSingleton DAF_WFMOSignalReactorSingleton;
 typedef ACE_DLL_Singleton_T<DAF_WFMOSignalReactorSingleton, ACE_SYNCH_MUTEX>    SingletonWFMOSignalReactor;
 
 // This is needed to get only one of these defined across a set of DLLs and EXE
-DAF_SINGLETON_DECLARE(ACE_DLL_Singleton_T, DAF_WFMOSignalReactorSingleton, ACE_SYNCH_MUTEX);
+DAF_SINGLETON_DECLARE(ACE_DLL_Singleton_T, DAF_WFMOSignalReactorSingleton, ACE_SYNCH_MUTEX)
 
 #endif // DAF_WFMOSIGNALREACTOR_H
