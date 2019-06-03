@@ -53,34 +53,37 @@ namespace  //anonymous
 
 namespace DAF
 {
-    Sim_Time_Value Sim_Time_Policy::operator()() const
-    {
-        return SingletonSimTime::instance()->get_time_value();
-    }
 
-    void SimTime::set_time(double time)
+#ifdef DAF_USES_SIM_TIME
+    DAF_Time_Value DAF_Time_Policy::operator()() const
+    {
+        return SingletonDAFTime::instance()->get_time_value();
+    }
+#endif
+
+    void DAFTime::set_time(double time)
     {
         time_ = time;
     }
 
-    double SimTime::get_time() const
+    double DAFTime::get_time() const
     {
         return time_;
     }
 
-    Sim_Time_Value SimTime::get_time_value() const
+    DAF_Time_Value DAFTime::get_time_value() const
     {
-        Sim_Time_Value time;
+        DAF_Time_Value time;
         time.set(get_time());
         return time;
     }
 
-    void SimTime::tick()
+    void DAFTime::tick()
     {
         set_time(get_next_tick());
     }
 
-    double SimTime::get_next_tick() const
+    double DAFTime::get_next_tick() const
     {
         if (ACE_Reactor::instance()->timer_queue()->is_empty())
             return get_time();
@@ -90,7 +93,7 @@ namespace DAF
 
     WFMOSignalReactor::WFMOSignalReactor(bool use_sim_time_policy)
         : ACE_Reactor(new WFMO_Reactor(nullptr, use_sim_time_policy
-                                                ? static_cast<ACE_Timer_Queue*>(new Timer_Queue<Sim_Time_Policy>())
+                                                ? static_cast<ACE_Timer_Queue*>(new Timer_Queue<DAF_Time_Policy>())
                                                 : static_cast<ACE_Timer_Queue*>(new Timer_Queue<>())), true)
     {
     }

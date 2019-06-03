@@ -34,17 +34,21 @@
 namespace DAF
 {
 
-    class Sim_Time_Policy; // fwd decl for template
-    using Sim_Time_Value = ACE_Time_Value_T<Sim_Time_Policy>;
-    class DAF_Export Sim_Time_Policy
+#ifdef DAF_USES_SIM_TIME
+    class DAF_Time_Policy; // fwd decl for template
+    using DAF_Time_Value = ACE_Time_Value_T<DAF_Time_Policy>;
+    class DAF_Export DAF_Time_Policy
     {
     public:
         /// Return the current time according to this policy
-        Sim_Time_Value operator()() const;
-
+        DAF_Time_Value operator()() const;
         /// Noop. Just here to satisfy backwards compatibility demands.
         void set_gettimeofday(ACE_Time_Value(*)()) {}
     };
+#else
+    using DAF_Time_Policy = ACE_System_Time_Policy;
+    using DAF_Time_Value = ACE_Time_Value_T<DAF_Time_Policy>;
+#endif
 
     // template to redefine the order of the template params so that we can still use defaults but swap the time policy below
     template <typename TIME_POLICY = ACE_System_Time_Policy,
@@ -54,23 +58,22 @@ namespace DAF
         using Timer_Queue = ACE_Timer_Heap_T<TYPE, FUNCTOR, ACE_LOCK, TIME_POLICY>;
 
     // Use via the ACE Singleton, SingletonSimTime::instance()->set_time(...);
-    class DAF_Export SimTime
+    class DAF_Export DAFTime
     {
         std::atomic<double> time_ = 0.0;
     public:
         // explicitly set the time
-        // surely any skipped timers will trigger when this happens
         void set_time(double time);
         // return the current time
         double get_time() const;
-        Sim_Time_Value get_time_value() const;
-        // step to the next timer tick, or not if none
+        DAF_Time_Value get_time_value() const;
+        // step to the next timer tick, or not if no next
         void tick();
-        // get the next timer tick, or current time if none
+        // get the next timer tick, or current time if no next
         double get_next_tick() const;
     };
 
-    struct DAF_Export SimTimeSingleton : SimTime
+    struct DAF_Export DAFTimeSingleton : DAFTime
     {
         const ACE_TCHAR *dll_name() const
         {
@@ -85,8 +88,8 @@ namespace DAF
 } // namespace DAF
 
 // sim time singleton
-typedef ACE_DLL_Singleton_T<DAF::SimTimeSingleton, ACE_SYNCH_MUTEX> SingletonSimTime;
-DAF_SINGLETON_DECLARE(ACE_DLL_Singleton_T, DAF::SimTimeSingleton, ACE_SYNCH_MUTEX)
+typedef ACE_DLL_Singleton_T<DAF::DAFTimeSingleton, ACE_SYNCH_MUTEX> SingletonDAFTime;
+DAF_SINGLETON_DECLARE(ACE_DLL_Singleton_T, DAF::DAFTimeSingleton, ACE_SYNCH_MUTEX)
 
 namespace DAF
 {
