@@ -7,9 +7,6 @@ workspace {
   $(DDS_ROOT)/dds
   $(DDS_ROOT)/java
 
-  $(DAF_ROOT)/DAF.mwc
-  .
-
   exclude {
     $(DDS_ROOT)/java/jms
     $(DDS_ROOT)/tools

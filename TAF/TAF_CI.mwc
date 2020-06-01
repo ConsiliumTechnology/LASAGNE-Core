@@ -38,6 +38,9 @@ workspace {
   $(TAO_ROOT)/orbsvcs/ImplRepo_Service/ImplRepo_Service.mpc
   $(TAO_ROOT)/orbsvcs/Naming_Service/Naming_Service.mpc
   $(TAO_ROOT)/utils/nslist/nslist.mpc
-  
+
+  $(DAF_ROOT)/DAF.mwc
+  .
+
 }
 
