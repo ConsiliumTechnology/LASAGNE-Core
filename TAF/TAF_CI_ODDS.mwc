@@ -1,0 +1,17 @@
+workspace {
+  cmdline += -include $DAF_ROOT/MPC/config \
+             -feature_file $DAF_ROOT/MPC/config/TAF.features
+  
+  $(TAF_ROOT)/TAF_CI.mwc
+
+  $(DDS_ROOT)/dds
+  $(DDS_ROOT)/java
+
+  exclude {
+    $(DDS_ROOT)/java/jms
+    $(DDS_ROOT)/tools
+    $(DDS_ROOT)/tools/modeling/tests
+  }
+
+}
+
