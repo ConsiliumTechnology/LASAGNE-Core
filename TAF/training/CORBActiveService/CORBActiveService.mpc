@@ -81,7 +81,7 @@ project(OSPL_CORBActiveService) : OSPLCORBActiveService, ospl_pubsub {
 
 project(CORBActiveClient) : taflib {
   exename    = *
-  after     += CORBActiveService
+  after     += CORBActiveService ODDS_CORBActiveService NDDS_CORBActiveService CDDS_CORBActiveService OSPL_CORBActiveService
 
   macros    += CORBACTIVESERVICE_HAS_DLL=0 
 
