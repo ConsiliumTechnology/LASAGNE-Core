@@ -1,4 +1,4 @@
-project : opendds, dcps {
+project : opendds {
   requires += opendds
   libs  += ODDS_PubSub
   after += ODDS_PubSub
