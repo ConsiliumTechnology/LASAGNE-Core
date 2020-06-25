@@ -1,11 +1,10 @@
-project : ospldefaults{
-    libs += ddskernel
-  
+project : ospldefaults {
+    lit_libs += ddskernel
 }
 
 feature(!osplcorba) {
     requires += opensplice
-    libs += dcpssacpp 
+    lit_libs += dcpssacpp 
     includes += $(OSPL_HOME)/include/dcps/C++/SACPP
     macros += OSPL_CPP_CORBA_BACWARD_COMPAT=0
 }
@@ -18,5 +17,5 @@ feature(osplcorba) {
   idlflags += -I$(OSPL_HOME)/etc/idl
   
   
-  libs += dcpsccpp
+  lit_libs += dcpsccpp
 }
